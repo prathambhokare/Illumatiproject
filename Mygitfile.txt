@@ -1,0 +1,4 @@
+welcome to git
+git add .
+//to add all the files from the working directory to the local repository
+git add <filename>
