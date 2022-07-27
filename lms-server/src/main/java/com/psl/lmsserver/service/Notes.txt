@@ -1,0 +1,193 @@
+//Nested Function Work as Follows-
+ {
+    "name":"XYZ",
+	"email":"abc@gmail.com",
+	"passWord":"Pass@123",
+	"seniorId" :1,
+	//Nested Tables Inside the User table is RoleTable
+	"roletable":{
+        "name":"admin"
+    }
+}
+
+
+//Add User Api
+/*@PostMapping(path = "/addUser")
+	public ResponseEntity<String> addUser(@RequestBody User user) {
+		try {
+			Instant start = Instant.now();
+			userServiceobj.addUser(user);
+			Instant end = Instant.now();
+			Duration timeElapsed = Duration.between(start, end);
+			logger.info("JourneyService.Controller : User add in at Execution time: " + timeElapsed.toNanos());
+			logger.info("The User Added SuccessFully!");
+			return new ResponseEntity<String>("The User is Added SuccessFully!", HttpStatus.OK);
+		} catch (Exception e) {
+			logger.error("The User is Not Added SuccessFully!" + e.getMessage());
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}*/
+
+//Task1-
+   -The Encryption and Decryption Function
+   -The Task is Done
+
+//Task2-
+    -Add user Api.
+    -Add user for the Different roles of a user.
+    -validate if user is not already present using email id.
+    -it Working on it
+        -To Do
+            1.Checking the User role is valid or not. completed
+            2.Checking the User is already present or not using the email address. completed
+            3.Checking if the Body is Missing. InProgress
+
+
+ // addUser supporting material - userServiceImpl
+  @Override
+     public void addUser(User user) throws Exception {
+         String encryptedData = encrypt_decrypt.encrypt(user.getPassWord(), secret_Key);
+         user.setPassWord(encryptedData);
+         Role role = null;
+         logger.info("The role of the user is"+user.getRoletable().getName());
+         role = roleRepoobj.findRoleByName(user.getRoletable().getName());
+         logger.info("the role of user is"+role.getRoleId()+" "+role.getName());
+         //User new_user=userRepoobj.getUserByName("sbdhd");
+         //logger.info("The value of new user is"+new_user.getName());
+         if (role != null) {
+             logger.info("The user role is added");
+             user.getRoletable().setRoleId(role.getRoleId());
+         } else{
+             String decryptedData = encrypt_decrypt.decrypt(user.getPassWord(), secret_Key);
+             user.setPassWord(decryptedData);
+             logger.error("The user is role is Invalid");
+             throw new InvalidInputException("The User Role is Invalid");
+         }
+         if (userRepoobj.getUserByEmailId(user.getEmail()) == null) {
+             userRepoobj.save(user);
+             String decryptedData = encrypt_decrypt.decrypt(user.getPassWord(), secret_Key);
+             user.setPassWord(decryptedData);
+             logger.info("The User Added SuccessFully!");
+         } else {
+             logger.error("The User Already present with the Same Email id");
+             throw new InvalidInputException("The User Already Present With Same Email id");
+         }
+     }
+
+     @Override
+     public void addUsers(User user,String senior_name,String role_name) throws Exception {
+         String encryptedData = encrypt_decrypt.encrypt(user.getPassWord(), secret_Key);
+         user.setPassWord(encryptedData);
+         Role role = null;
+         logger.info("True 1");
+         logger.info("The role of the user is"+role_name);
+         role = roleRepoobj.findRoleByName(role_name);
+         logger.info("True 2");
+         logger.info("the role of user is"+role.getRoleId()+" "+role.getName());
+         if (role != null) {
+             logger.info("The user role is added");
+             logger.info("True 3");
+             user.setRoletable(role);
+             logger.info("True 4");
+         } else{
+             String decryptedData = encrypt_decrypt.decrypt(user.getPassWord(), secret_Key);
+             user.setPassWord(decryptedData);
+             logger.error("The user is role is Invalid");
+             throw new InvalidInputException("The User Role is Invalid");
+         }
+         if (userRepoobj.getUserByEmailId(user.getEmail()) == null) {
+             logger.info("True 5");
+             User new_user=userRepoobj.getUserByName(senior_name);
+             logger.info("The value of new user is"+new_user.getName());
+             logger.info("True 6");
+             user.setSeniorId(new_user.getUserId());
+             userRepoobj.save(user);
+             String decryptedData = encrypt_decrypt.decrypt(user.getPassWord(), secret_Key);
+             user.setPassWord(decryptedData);
+             logger.info("The User Added SuccessFully!");
+         } else {
+             logger.error("The User Already present with the Same Email id");
+             throw new InvalidInputException("The User Already Present With Same Email id");
+         }
+     }
+
+
+
+
+  //userService Impl
+   public void addUser(User user) throws Exception;
+
+
+   public void addUsers(User user,String senior_name,String role) throws Exception;
+
+
+//Apis
+
+	@PostMapping(path = "/addUser")
+	public Response<Object> addUser(@RequestBody User user) {
+		try {
+			Instant start = Instant.now();
+			userServiceobj.addUser(user);
+			Instant end = Instant.now();
+			Duration timeElapsed = Duration.between(start, end);
+			logger.info("JourneyService.Controller : User add in at Execution time: " + timeElapsed.toNanos());
+			logger.info("The User Added SuccessFully!");
+			return ApplicationFactory.getInstance().createResponse("The User is Added SuccessFully!",HttpStatus.OK,user);
+		}
+		catch (Exception e) {
+			logger.error("The User is Not Added SuccessFully!" + e.getMessage());
+			return ApplicationFactory.getInstance().createResponse("The User is Not Added SuccessFully!"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+
+
+/* "name":"XYZ",
+	"email":"abdhwjhghsnnfdrdj@gmail.com",
+    "mobileNo":"8080184586",
+	"passWord":"Pass@123",
+    "user":"XYZ",
+    "reports_to":"XYZ",
+    "role":"admin"*/
+
+
+	@PostMapping(path = "/addUsers")
+	public Response<Object> addUsers(@RequestBody Map<String,Object> user_details) {
+		try {
+			Instant start = Instant.now();
+			User user=new User();
+			String senior_name=null;
+			String role_name=null;
+			for (Map.Entry<String,Object> entry : user_details.entrySet()) {
+				logger.info("Key = " + entry.getKey() +
+						", Value = " + entry.getValue());
+				if (entry.getKey()=="reports_to") {
+					senior_name = entry.getValue().toString();
+				}
+				else if (entry.getKey()=="role") {
+					role_name = entry.getValue().toString();
+				}
+				else if (entry.getKey()=="name") {
+					user.setName(entry.getValue().toString());
+				}
+				else if (entry.getKey()=="email") {
+					user.setEmail(entry.getValue().toString());
+				}
+				else if (entry.getKey()=="mobileNo") {
+					user.setMobileNo(entry.getValue().toString());
+				} else if (entry.getKey()=="passWord") {
+					user.setPassWord(entry.getValue().toString());
+				}
+			}
+			userServiceobj.addUsers(user,senior_name,role_name);
+			Instant end = Instant.now();
+			Duration timeElapsed = Duration.between(start, end);
+			logger.info("JourneyService.Controller : User add in at Execution time: " + timeElapsed.toNanos());
+			logger.info("The User Added SuccessFully!");
+			return ApplicationFactory.getInstance().createResponse("The User is Added SuccessFully!",HttpStatus.OK,user);
+		}
+		catch (Exception e) {
+			logger.error("The User is Not Added SuccessFully!" + e.getMessage());
+			return ApplicationFactory.getInstance().createResponse("The User is Not Added SuccessFully!"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
